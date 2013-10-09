@@ -1,5 +1,4 @@
 var sqlite = (function() {
-
     var app = app || {};
     app.db = null;
 
@@ -20,14 +19,23 @@ var sqlite = (function() {
                           "model TEXT, " +
                           "vendor TEXT, " +
                           "rentPrice DOUBLE, " +
-                          "rentOption BIT)", []);
+                          "rentOption BIT);", []);
         });
     }
 
     app.insertRecord = function(car) {
         app.db.transaction(function(tx) {
-            tx.executeSql("INSERT INTO Cars(model, vendor, rentPrice, rentOption) VALUES (?,?,?,?)",
-                          [car.model, car.vendor, car.rentPrice, 1],
+            tx.executeSql("INSERT INTO Cars(model, vendor, rentPrice, rentOption) VALUES (?,?,?,?);",
+                          [car.model, car.vendor, car.rentPrice, car.rentOption],
+                          app.onSuccess,
+                          app.onError);
+        });
+    }
+    
+     app.deleteRecord = function(id) {
+        app.db.transaction(function(tx) {
+            tx.executeSql("DELETE FROM Cars WHERE id = ?;",
+                          [id],
                           app.onSuccess,
                           app.onError);
         });
@@ -35,7 +43,7 @@ var sqlite = (function() {
 
     app.updateRecord = function(id, rentOption) {
         app.db.transaction(function(tx) {
-            tx.executeSql("UPDATE Cars SET rentOption = ? WHERE id = ?",
+            tx.executeSql("UPDATE Cars SET rentOption = ? WHERE id = ?;",
                           [rentOption, id],
                           app.onSuccess,
                           app.onError);
@@ -44,22 +52,17 @@ var sqlite = (function() {
 
     app.selectAllRecords = function(fn) {
         app.db.transaction(function(tx) {
-            tx.executeSql("SELECT * FROM Cars ORDER BY id", [],
+            tx.executeSql("SELECT * FROM Cars;", [],
                           fn,
                           app.onError);
         });
     }
 
-    function getAllTheData() {
-        var render = function (tx, rs) {
-            console.log(rs);
-            return rs;
-        }
-
-        app.selectAllRecords(render);
+    function getAllTheData(handleReceivedData) {
+        app.selectAllRecords(handleReceivedData);
     }
 
-    app.OnSuccess = function(tx, r) {
+    app.onSuccess = function(tx, r) {
         console.log("Your SQLite query was successful!");
     }
 
@@ -76,7 +79,8 @@ var sqlite = (function() {
     
     return {
         getData:getAllTheData,
-        addCar:app.insertRecord
+        addCar:app.insertRecord,
+        deleteCar:app.deleteRecord
     }
 }());
 /*
